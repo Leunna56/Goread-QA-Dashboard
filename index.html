@@ -212,14 +212,38 @@ function parseCSVLine(line) {
 }
 
 function parseSheet(text) {
-  const lines = text.split('\n');
+  // Full CSV parser that handles multi-line quoted fields
+  // (Remarks often span multiple lines, breaking simple \n split)
+  text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const rows = [];
+  let currentRow = [];
+  let field = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '"') {
+      if (inQuotes && text[i + 1] === '"') { field += '"'; i++; }
+      else { inQuotes = !inQuotes; }
+    } else if (ch === ',' && !inQuotes) {
+      currentRow.push(field.trim());
+      field = '';
+    } else if (ch === '\n' && !inQuotes) {
+      currentRow.push(field.trim());
+      if (currentRow.some(c => c !== '')) rows.push(currentRow);
+      currentRow = [];
+      field = '';
+    } else {
+      field += ch;
+    }
+  }
+  if (field || currentRow.length > 0) { currentRow.push(field.trim()); rows.push(currentRow); }
+
   const records = [];
   const dateRe = /^\d{1,2}\/\d{1,2}\/\d{4}/;
 
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-    const cols = parseCSVLine(line);
+  for (let i = 1; i < rows.length; i++) {
+    const cols = rows[i];
     const timestamp = (cols[0] || '').trim();
     if (!dateRe.test(timestamp)) continue;
     const agent = (cols[1] || '').trim();
