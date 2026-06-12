@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Goread VP QA Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f1117; color: #e2e8f0; min-height: 100vh; }
+
+  header { background: #1a1d2e; border-bottom: 1px solid #2d3748; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; }
+  header h1 { font-size: 20px; font-weight: 700; color: #fff; }
+  header .subtitle { font-size: 13px; color: #718096; }
+  #last-updated { font-size: 12px; color: #4a5568; }
+
+  .tabs { display: flex; gap: 2px; padding: 16px 24px 0; border-bottom: 1px solid #2d3748; background: #1a1d2e; }
+  .tab { padding: 10px 20px; cursor: pointer; font-size: 14px; font-weight: 500; color: #718096; border-bottom: 2px solid transparent; transition: all 0.2s; }
+  .tab.active { color: #667eea; border-bottom-color: #667eea; }
+  .tab:hover:not(.active) { color: #a0aec0; }
+
+  .filters { display: flex; align-items: center; gap: 10px; padding: 16px 24px; flex-wrap: wrap; }
+  .filters label { font-size: 13px; color: #718096; }
+  .filter-btn { padding: 6px 14px; border-radius: 6px; border: 1px solid #2d3748; background: #1a1d2e; color: #a0aec0; cursor: pointer; font-size: 13px; transition: all 0.2s; }
+  .filter-btn.active { background: #667eea; border-color: #667eea; color: #fff; }
+  .filter-btn:hover:not(.active) { border-color: #667eea; color: #667eea; }
+  input[type="date"] { background: #1a1d2e; border: 1px solid #2d3748; border-radius: 6px; color: #a0aec0; padding: 5px 10px; font-size: 13px; }
+  .filter-sep { color: #2d3748; }
+
+  .content { padding: 20px 24px; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* Stat cards */
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .stat-card { background: #1a1d2e; border: 1px solid #2d3748; border-radius: 12px; padding: 20px; }
+  .stat-card .label { font-size: 12px; color: #718096; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+  .stat-card .value { font-size: 32px; font-weight: 700; }
+  .stat-card .sub { font-size: 12px; color: #718096; margin-top: 4px; }
+  .score-green { color: #48bb78; }
+  .score-yellow { color: #ed8936; }
+  .score-red { color: #fc8181; }
+
+  /* Charts */
+  .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .chart-card { background: #1a1d2e; border: 1px solid #2d3748; border-radius: 12px; padding: 20px; }
+  .chart-card h3 { font-size: 14px; font-weight: 600; color: #a0aec0; margin-bottom: 16px; }
+  .chart-wrap { position: relative; height: 280px; }
+  @media (max-width: 768px) { .chart-grid { grid-template-columns: 1fr; } }
+
+  /* Agent table */
+  .agent-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+  .agent-card { background: #1a1d2e; border: 1px solid #2d3748; border-radius: 12px; padding: 20px; }
+  .agent-card .agent-name { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+  .agent-card .agent-meta { font-size: 12px; color: #718096; margin-bottom: 14px; }
+  .agent-score-big { font-size: 36px; font-weight: 700; margin-bottom: 12px; }
+  .criteria-bar { margin-bottom: 8px; }
+  .criteria-bar .name { font-size: 12px; color: #a0aec0; margin-bottom: 3px; display: flex; justify-content: space-between; }
+  .bar-track { background: #2d3748; border-radius: 4px; height: 6px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s; }
+
+  /* Rankings */
+  .ranking-table { background: #1a1d2e; border: 1px solid #2d3748; border-radius: 12px; overflow: hidden; margin-bottom: 24px; }
+  .ranking-table table { width: 100%; border-collapse: collapse; }
+  .ranking-table th { background: #16192a; padding: 12px 16px; text-align: left; font-size: 12px; font-weight: 600; color: #718096; text-transform: uppercase; letter-spacing: 0.05em; }
+  .ranking-table td { padding: 12px 16px; font-size: 14px; border-top: 1px solid #1e2335; }
+  .ranking-table tr:hover td { background: #1e2335; }
+  .rank-badge { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; font-size: 12px; font-weight: 700; }
+  .rank-1 { background: #f6c90e22; color: #f6c90e; }
+  .rank-2 { background: #a0aec022; color: #a0aec0; }
+  .rank-3 { background: #ed893622; color: #ed8936; }
+  .rank-n { background: #2d374822; color: #718096; }
+
+  /* Drivers */
+  .drivers-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .driver-card { background: #1a1d2e; border: 1px solid #2d3748; border-radius: 12px; padding: 20px; }
+  .driver-card h3 { font-size: 14px; font-weight: 600; color: #a0aec0; margin-bottom: 16px; }
+  .driver-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #1e2335; }
+  .driver-item:last-child { border-bottom: none; }
+  .driver-name { font-size: 14px; }
+  .driver-pct { font-size: 14px; font-weight: 600; }
+  .driver-bar-wrap { flex: 1; margin: 0 12px; }
+
+  /* Action items */
+  .action-section { background: #1a1d2e; border: 1px solid #2d3748; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  .action-section h3 { font-size: 15px; font-weight: 600; margin-bottom: 14px; }
+  .action-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid #1e2335; align-items: flex-start; }
+  .action-item:last-child { border-bottom: none; }
+  .action-priority { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; white-space: nowrap; }
+  .priority-high { background: #fc818122; color: #fc8181; }
+  .priority-med { background: #ed893622; color: #ed8936; }
+  .priority-low { background: #48bb7822; color: #48bb78; }
+  .action-text { font-size: 14px; color: #a0aec0; line-height: 1.5; }
+
+  /* Loading */
+  #loading { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 300px; gap: 16px; }
+  .spinner { width: 40px; height: 40px; border: 3px solid #2d3748; border-top-color: #667eea; border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #error-msg { background: #fc818122; border: 1px solid #fc8181; border-radius: 8px; padding: 16px; margin: 20px 24px; color: #fc8181; display: none; }
+
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .badge-green { background: #48bb7822; color: #48bb78; }
+  .badge-yellow { background: #ed893622; color: #ed8936; }
+  .badge-red { background: #fc818122; color: #fc8181; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>📊 Goread VP QA Dashboard</h1>
+    <div class="subtitle">Customer Support Quality Assurance</div>
+  </div>
+  <div id="last-updated">Loading data…</div>
+</header>
+
+<div id="error-msg"></div>
+
+<div class="tabs">
+  <div class="tab active" data-tab="overview">Overview</div>
+  <div class="tab" data-tab="agents">Agent Scores</div>
+  <div class="tab" data-tab="drivers">Markdown Drivers</div>
+  <div class="tab" data-tab="actions">Action Items</div>
+</div>
+
+<div class="filters">
+  <label>Filter:</label>
+  <div id="month-buttons"></div>
+  <div class="filter-sep">|</div>
+  <label>From:</label>
+  <input type="date" id="date-from">
+  <label>To:</label>
+  <input type="date" id="date-to">
+  <button class="filter-btn" id="btn-apply-dates">Apply</button>
+  <button class="filter-btn" id="btn-clear-dates">Clear</button>
+</div>
+
+<div class="content">
+  <div id="loading"><div class="spinner"></div><div style="color:#718096">Loading QA data…</div></div>
+
+  <div id="dashboard" style="display:none">
+    <!-- Overview -->
+    <div class="tab-panel active" id="tab-overview">
+      <div class="stat-grid" id="stat-grid"></div>
+      <div class="chart-grid">
+        <div class="chart-card"><h3>Team Score Trend</h3><div class="chart-wrap"><canvas id="chart-trend"></canvas></div></div>
+        <div class="chart-card"><h3>Agent Score Comparison</h3><div class="chart-wrap"><canvas id="chart-agents"></canvas></div></div>
+      </div>
+      <div class="ranking-table" id="overview-rankings"></div>
+    </div>
+
+    <!-- Agent Scores -->
+    <div class="tab-panel" id="tab-agents">
+      <div class="agent-grid" id="agent-grid"></div>
+    </div>
+
+    <!-- Markdown Drivers -->
+    <div class="tab-panel" id="tab-drivers">
+      <div class="drivers-grid" id="drivers-grid"></div>
+    </div>
+
+    <!-- Action Items -->
+    <div class="tab-panel" id="tab-actions">
+      <div id="actions-content"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SHEET_ID = '1WAGNYgLdFwMsMJMMHhlJwrhl3AqFn-2yrwVkl32YQNI';
+const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
+
+const CRITERIA = [
+  { key: 'c0', label: 'Acknowledgment',    cat: 'Opening' },
+  { key: 'c1', label: 'System Utilization', cat: 'Resolution' },
+  { key: 'c2', label: 'Probing',            cat: 'Resolution' },
+  { key: 'c3', label: 'SOP',               cat: 'Resolution' },
+  { key: 'c4', label: 'Topic Application', cat: 'Resolution' },
+  { key: 'c5', label: 'Data Integrity',    cat: 'Resolution' },
+  { key: 'c6', label: 'Documentation',     cat: 'Resolution' },
+  { key: 'c7', label: 'Professionalism',   cat: 'CX' },
+  { key: 'c8', label: 'Empathy',           cat: 'CX' },
+  { key: 'c9', label: 'Reassurance',       cat: 'CX' },
+];
+
+let ALL_RECORDS = [];
+let FILTERED = [];
+let charts = {};
+
+// ── CSV Parser ────────────────────────────────────────────────
+function parseCSVLine(line) {
+  const result = [];
+  let field = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && line[i+1] === '"') { field += '"'; i++; }
+      else { inQuotes = !inQuotes; }
+    } else if (ch === ',' && !inQuotes) {
+      result.push(field.trim());
+      field = '';
+    } else {
+      field += ch;
+    }
+  }
+  result.push(field.trim());
+  return result;
+}
+
+function parseSheet(text) {
+  const lines = text.split('\n');
+  const records = [];
+  const dateRe = /^\d{1,2}\/\d{1,2}\/\d{4}/;
+
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    const cols = parseCSVLine(line);
+    const timestamp = (cols[0] || '').trim();
+    if (!dateRe.test(timestamp)) continue;
+    const agent = (cols[1] || '').trim();
+    const reviewer = (cols[3] || '').trim();
+    if (!agent || agent === 'Test' || reviewer === 'Test') continue;
+    const score = parseFloat(cols[4]);
+    if (isNaN(score)) continue;
+
+    const get = (i) => { const v = (cols[i] || '').trim(); return v === '' ? 'N/A' : v; };
+    const datePart = timestamp.split(' ')[0];
+
+    records.push({
+      date: datePart,
+      dateObj: new Date(datePart),
+      agent,
+      reviewer,
+      score,
+      remarks: get(5),
+      c0: get(6),  // Acknowledgment
+      c1: get(7),  // System Utilization
+      c2: get(8),  // Probing
+      c3: get(9),  // SOP
+      c4: get(10), // Topic Application
+      c5: get(11), // Data Integrity
+      c6: get(12), // Documentation
+      c7: get(13), // Professionalism
+      c8: get(14), // Empathy
+      c9: get(15), // Reassurance
+      channel: get(20),
+      type: get(21),
+    });
+  }
+  return records;
+}
+
+// ── Data loading ──────────────────────────────────────────────
+async function loadData() {
+  try {
+    const res = await fetch(CSV_URL);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    ALL_RECORDS = parseSheet(text);
+    if (!ALL_RECORDS.length) throw new Error('No records found — make sure the sheet is publicly shared.');
+
+    const dates = ALL_RECORDS.map(r => r.dateObj);
+    const minDate = new Date(Math.min(...dates));
+    const maxDate = new Date(Math.max(...dates));
+    document.getElementById('last-updated').textContent =
+      `Data: ${fmt(minDate)} – ${fmt(maxDate)} · ${ALL_RECORDS.length} reviews`;
+
+    buildMonthButtons();
+    applyFilter('all');
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+  } catch(e) {
+    document.getElementById('loading').style.display = 'none';
+    const err = document.getElementById('error-msg');
+    err.style.display = 'block';
+    err.textContent = `Could not load data: ${e.message}. Ensure the Google Sheet is shared publicly (Anyone with link → Viewer).`;
+  }
+}
+
+function fmt(d) {
+  return d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+}
+
+// ── Filters ───────────────────────────────────────────────────
+function buildMonthButtons() {
+  const months = {};
+  for (const r of ALL_RECORDS) {
+    const key = r.dateObj.getFullYear() + '-' + String(r.dateObj.getMonth()+1).padStart(2,'0');
+    const label = r.dateObj.toLocaleString('en-US', { month:'short', year:'2-digit' });
+    months[key] = label;
+  }
+  const sorted = Object.keys(months).sort();
+  const container = document.getElementById('month-buttons');
+  const allBtn = document.createElement('button');
+  allBtn.className = 'filter-btn active';
+  allBtn.textContent = 'All';
+  allBtn.dataset.filter = 'all';
+  allBtn.onclick = () => applyFilter('all', allBtn);
+  container.appendChild(allBtn);
+  for (const key of sorted) {
+    const btn = document.createElement('button');
+    btn.className = 'filter-btn';
+    btn.textContent = months[key];
+    btn.dataset.filter = key;
+    btn.onclick = () => applyFilter(key, btn);
+    container.appendChild(btn);
+  }
+}
+
+let activeFilter = 'all';
+
+function applyFilter(filter, btn) {
+  activeFilter = filter;
+  document.querySelectorAll('#month-buttons .filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  else document.querySelector('#month-buttons .filter-btn').classList.add('active');
+  document.getElementById('date-from').value = '';
+  document.getElementById('date-to').value = '';
+
+  if (filter === 'all') {
+    FILTERED = [...ALL_RECORDS];
+  } else {
+    const [y, m] = filter.split('-').map(Number);
+    FILTERED = ALL_RECORDS.filter(r => r.dateObj.getFullYear() === y && r.dateObj.getMonth()+1 === m);
+  }
+  render();
+}
+
+document.getElementById('btn-apply-dates').onclick = () => {
+  const from = document.getElementById('date-from').value;
+  const to = document.getElementById('date-to').value;
+  document.querySelectorAll('#month-buttons .filter-btn').forEach(b => b.classList.remove('active'));
+  FILTERED = ALL_RECORDS.filter(r => {
+    if (from && r.date < from) return false;
+    if (to && r.date > to) return false;
+    return true;
+  });
+  render();
+};
+
+document.getElementById('btn-clear-dates').onclick = () => {
+  applyFilter('all');
+};
+
+// ── Scoring helpers ───────────────────────────────────────────
+function criteriaPass(val) {
+  if (!val || val === 'N/A') return null;
+  const v = val.toLowerCase();
+  return v === 'yes' || v === 'pass' || v === 'met' || v === '1' || v === 'true';
+}
+
+function criteriaRate(records, key) {
+  let pass = 0, total = 0;
+  for (const r of records) {
+    const v = criteriaPass(r[key]);
+    if (v === null) continue;
+    total++;
+    if (v) pass++;
+  }
+  return total > 0 ? (pass / total * 100) : null;
+}
+
+function agentStats(records) {
+  const byAgent = {};
+  for (const r of records) {
+    if (!byAgent[r.agent]) byAgent[r.agent] = [];
+    byAgent[r.agent].push(r);
+  }
+  return Object.entries(byAgent).map(([agent, recs]) => {
+    const avgScore = recs.reduce((s, r) => s + r.score, 0) / recs.length;
+    const criteria = {};
+    for (const c of CRITERIA) criteria[c.key] = criteriaRate(recs, c.key);
+    return { agent, count: recs.length, avgScore, criteria, records: recs };
+  }).sort((a, b) => b.avgScore - a.avgScore);
+}
+
+function scoreColor(s) {
+  if (s >= 85) return '#48bb78';
+  if (s >= 70) return '#ed8936';
+  return '#fc8181';
+}
+function scoreBadge(s) {
+  if (s >= 85) return 'badge-green';
+  if (s >= 70) return 'badge-yellow';
+  return 'badge-red';
+}
+function scoreClass(s) {
+  if (s >= 85) return 'score-green';
+  if (s >= 70) return 'score-yellow';
+  return 'score-red';
+}
+
+// ── Render ────────────────────────────────────────────────────
+function render() {
+  const agents = agentStats(FILTERED);
+  renderOverview(agents);
+  renderAgentCards(agents);
+  renderDrivers(agents);
+  renderActions(agents);
+}
+
+// Overview
+function renderOverview(agents) {
+  const total = FILTERED.length;
+  const teamAvg = total ? FILTERED.reduce((s, r) => s + r.score, 0) / total : 0;
+  const aboveTarget = agents.filter(a => a.avgScore >= 85).length;
+
+  document.getElementById('stat-grid').innerHTML = `
+    <div class="stat-card">
+      <div class="label">Team QA Score</div>
+      <div class="value ${scoreClass(teamAvg)}">${teamAvg.toFixed(1)}%</div>
+      <div class="sub">${total} reviews</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Agents Reviewed</div>
+      <div class="value" style="color:#667eea">${agents.length}</div>
+      <div class="sub">${aboveTarget} above 85% target</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Top Agent</div>
+      <div class="value" style="color:#48bb78;font-size:18px;padding-top:6px">${agents[0]?.agent || '–'}</div>
+      <div class="sub">${agents[0] ? agents[0].avgScore.toFixed(1) + '%' : ''}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Needs Attention</div>
+      <div class="value" style="color:#fc8181;font-size:18px;padding-top:6px">${agents.filter(a=>a.avgScore<70).length} agents</div>
+      <div class="sub">below 70%</div>
+    </div>
+  `;
+
+  // Trend chart
+  const byMonth = {};
+  for (const r of FILTERED) {
+    const key = r.dateObj.toLocaleString('en-US', { month:'short', year:'2-digit' });
+    if (!byMonth[key]) byMonth[key] = [];
+    byMonth[key].push(r.score);
+  }
+  const monthKeys = Object.keys(byMonth).sort((a,b) => {
+    const da = new Date('1 ' + a), db = new Date('1 ' + b);
+    return da - db;
+  });
+  const trendData = monthKeys.map(k => byMonth[k].reduce((s,v)=>s+v,0)/byMonth[k].length);
+
+  if (charts.trend) charts.trend.destroy();
+  charts.trend = new Chart(document.getElementById('chart-trend'), {
+    type: 'line',
+    data: {
+      labels: monthKeys,
+      datasets: [{
+        label: 'Team Avg Score',
+        data: trendData,
+        borderColor: '#667eea',
+        backgroundColor: '#667eea22',
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: '#667eea',
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        y: { min: 0, max: 100, grid: { color: '#2d3748' }, ticks: { color: '#718096', callback: v => v + '%' } },
+        x: { grid: { color: '#2d3748' }, ticks: { color: '#718096' } }
+      },
+      plugins: { legend: { labels: { color: '#a0aec0' } } }
+    }
+  });
+
+  // Agent bar chart
+  if (charts.agents) charts.agents.destroy();
+  charts.agents = new Chart(document.getElementById('chart-agents'), {
+    type: 'bar',
+    data: {
+      labels: agents.map(a => a.agent.split(' ')[0]),
+      datasets: [{
+        label: 'Avg Score %',
+        data: agents.map(a => +a.avgScore.toFixed(1)),
+        backgroundColor: agents.map(a => scoreColor(a.avgScore) + '99'),
+        borderColor: agents.map(a => scoreColor(a.avgScore)),
+        borderWidth: 1,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        y: { min: 0, max: 100, grid: { color: '#2d3748' }, ticks: { color: '#718096', callback: v => v + '%' } },
+        x: { grid: { color: '#2d3748' }, ticks: { color: '#718096', maxRotation: 45 } }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => `${ctx.raw}%` } }
+      }
+    }
+  });
+
+  // Rankings table
+  document.getElementById('overview-rankings').innerHTML = `
+    <table>
+      <thead><tr>
+        <th>Rank</th><th>Agent</th><th>Score</th><th>Reviews</th><th>Status</th>
+      </tr></thead>
+      <tbody>
+        ${agents.map((a, i) => `
+          <tr>
+            <td><span class="rank-badge rank-${i < 3 ? i+1 : 'n'}">${i+1}</span></td>
+            <td>${a.agent}</td>
+            <td class="${scoreClass(a.avgScore)}" style="font-weight:600">${a.avgScore.toFixed(1)}%</td>
+            <td>${a.count}</td>
+            <td><span class="badge ${scoreBadge(a.avgScore)}">${a.avgScore >= 85 ? 'On Target' : a.avgScore >= 70 ? 'Needs Work' : 'At Risk'}</span></td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+// Agent cards
+function renderAgentCards(agents) {
+  document.getElementById('agent-grid').innerHTML = agents.map(a => {
+    const bars = CRITERIA.map(c => {
+      const rate = a.criteria[c.key];
+      const pct = rate === null ? 0 : rate;
+      const color = scoreColor(pct);
+      return `
+        <div class="criteria-bar">
+          <div class="name"><span>${c.label}</span><span style="color:${color}">${rate === null ? 'N/A' : pct.toFixed(0) + '%'}</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
+        </div>`;
+    }).join('');
+    return `
+      <div class="agent-card">
+        <div class="agent-name">${a.agent}</div>
+        <div class="agent-meta">${a.count} reviews · Reviewer: ${[...new Set(a.records.map(r=>r.reviewer))].join(', ')}</div>
+        <div class="agent-score-big ${scoreClass(a.avgScore)}">${a.avgScore.toFixed(1)}%</div>
+        ${bars}
+      </div>`;
+  }).join('');
+}
+
+// Markdown Drivers
+function renderDrivers(agents) {
+  // Team-wide criteria pass rates
+  const teamRates = CRITERIA.map(c => ({ ...c, rate: criteriaRate(FILTERED, c.key) }))
+    .filter(c => c.rate !== null)
+    .sort((a, b) => a.rate - b.rate);
+
+  const worstTeam = teamRates.slice(0, 5);
+  const bestTeam = teamRates.slice(-5).reverse();
+
+  // Per-agent worst criteria
+  const agentDrivers = agents.map(a => {
+    const worst = CRITERIA.map(c => ({ ...c, rate: a.criteria[c.key] }))
+      .filter(c => c.rate !== null)
+      .sort((a, b) => a.rate - b.rate)
+      .slice(0, 3);
+    return { agent: a.agent, avgScore: a.avgScore, worst };
+  });
+
+  document.getElementById('drivers-grid').innerHTML = `
+    <div class="driver-card">
+      <h3>🔻 Top Markdown Drivers (Team)</h3>
+      ${worstTeam.map(c => `
+        <div class="driver-item">
+          <div class="driver-name">${c.label}</div>
+          <div class="driver-bar-wrap">
+            <div class="bar-track"><div class="bar-fill" style="width:${c.rate}%;background:${scoreColor(c.rate)}"></div></div>
+          </div>
+          <div class="driver-pct" style="color:${scoreColor(c.rate)}">${c.rate.toFixed(0)}%</div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="driver-card">
+      <h3>✅ Best Performing Criteria</h3>
+      ${bestTeam.map(c => `
+        <div class="driver-item">
+          <div class="driver-name">${c.label}</div>
+          <div class="driver-bar-wrap">
+            <div class="bar-track"><div class="bar-fill" style="width:${c.rate}%;background:${scoreColor(c.rate)}"></div></div>
+          </div>
+          <div class="driver-pct" style="color:${scoreColor(c.rate)}">${c.rate.toFixed(0)}%</div>
+        </div>
+      `).join('')}
+    </div>
+    ${agentDrivers.map(a => `
+      <div class="driver-card">
+        <h3>${a.agent} — Top Gaps</h3>
+        ${a.worst.length === 0 ? '<div style="color:#718096;font-size:13px">No criteria data available</div>' :
+          a.worst.map(c => `
+            <div class="driver-item">
+              <div class="driver-name">${c.label}</div>
+              <div class="driver-bar-wrap">
+                <div class="bar-track"><div class="bar-fill" style="width:${c.rate}%;background:${scoreColor(c.rate)}"></div></div>
+              </div>
+              <div class="driver-pct" style="color:${scoreColor(c.rate)}">${c.rate.toFixed(0)}%</div>
+            </div>`).join('')}
+      </div>
+    `).join('')}
+  `;
+}
+
+// Action Items
+function renderActions(agents) {
+  const teamRates = CRITERIA.map(c => ({ ...c, rate: criteriaRate(FILTERED, c.key) }))
+    .filter(c => c.rate !== null)
+    .sort((a, b) => a.rate - b.rate);
+
+  const teamActions = teamRates.filter(c => c.rate < 85).map(c => ({
+    priority: c.rate < 60 ? 'HIGH' : c.rate < 75 ? 'MED' : 'LOW',
+    text: generateTeamAction(c),
+  }));
+
+  const atRisk = agents.filter(a => a.avgScore < 85);
+
+  document.getElementById('actions-content').innerHTML = `
+    <div class="action-section">
+      <h3>🎯 Team-Wide Action Items</h3>
+      ${teamActions.length === 0
+        ? '<div style="color:#48bb78;font-size:14px">✅ All criteria above 85% — excellent performance!</div>'
+        : teamActions.map(a => `
+          <div class="action-item">
+            <span class="action-priority priority-${a.priority.toLowerCase()}">${a.priority}</span>
+            <span class="action-text">${a.text}</span>
+          </div>`).join('')}
+    </div>
+    ${atRisk.map(a => {
+      const gaps = CRITERIA.map(c => ({ ...c, rate: a.criteria[c.key] }))
+        .filter(c => c.rate !== null && c.rate < 85)
+        .sort((x, y) => x.rate - y.rate)
+        .slice(0, 4);
+      return `
+        <div class="action-section">
+          <h3>👤 ${a.agent} — <span class="${scoreClass(a.avgScore)}">${a.avgScore.toFixed(1)}%</span></h3>
+          ${gaps.length === 0
+            ? '<div style="color:#48bb78;font-size:14px">All tracked criteria above threshold.</div>'
+            : gaps.map(c => {
+              const priority = c.rate < 60 ? 'HIGH' : c.rate < 75 ? 'MED' : 'LOW';
+              return `
+                <div class="action-item">
+                  <span class="action-priority priority-${priority.toLowerCase()}">${priority}</span>
+                  <span class="action-text">${generateAgentAction(a.agent, c)}</span>
+                </div>`;
+            }).join('')}
+        </div>`;
+    }).join('')}
+  `;
+}
+
+function generateTeamAction(c) {
+  const map = {
+    'Acknowledgment': 'Coach team on proper call opening acknowledgment. Review greeting scripts and ensure agents confirm caller identity and reason for call.',
+    'System Utilization': 'Conduct system navigation refresher training. Ensure agents are using all available tools (CRM, knowledge base) before responding.',
+    'Probing': 'Reinforce probing question techniques. Agents should ask clarifying questions before jumping to resolution.',
+    'SOP': 'Review standard operating procedures. Schedule SOP knowledge-check sessions and update quick-reference guides.',
+    'Topic Application': 'Strengthen product/topic knowledge. Pair lower-scoring agents with top performers for shadowing sessions.',
+    'Data Integrity': 'Audit data entry practices. Implement spot-checks on CRM entries and reinforce data accuracy standards.',
+    'Documentation': 'Improve post-call documentation quality. Provide templates and checklists for call notes and ticket updates.',
+    'Professionalism': 'Address professionalism gaps through targeted coaching. Review call recordings flagged for tone or language issues.',
+    'Empathy': 'Conduct empathy and active listening workshops. Role-play difficult customer scenarios in team meetings.',
+    'Reassurance': 'Coach on providing clear reassurance and next steps. Agents should confirm resolution and set expectations before ending calls.',
+  };
+  return map[c.label] || `Improve ${c.label} — currently at ${c.rate.toFixed(0)}%. Schedule targeted coaching sessions.`;
+}
+
+function generateAgentAction(agent, c) {
+  const first = agent.split(' ')[0];
+  const map = {
+    'Acknowledgment': `Schedule 1:1 coaching with ${first} on call opening protocol. Review 2-3 recent calls together.`,
+    'System Utilization': `Walk ${first} through system tools in a live session. Create a personal quick-reference checklist.`,
+    'Probing': `Role-play probing scenarios with ${first}. Provide a question bank for common call types.`,
+    'SOP': `Review SOP knowledge gaps with ${first}. Assign self-study modules and follow up in 1 week.`,
+    'Topic Application': `Pair ${first} with top-performing agent for shadowing. Focus on product knowledge for their most common call types.`,
+    'Data Integrity': `Audit ${first}'s recent CRM entries. Provide corrective feedback and monitor for 2 weeks.`,
+    'Documentation': `Review ${first}'s call notes quality. Provide documentation templates and set quality expectations.`,
+    'Professionalism': `Listen to recent calls with ${first} and provide specific behavioral feedback. Set clear standards.`,
+    'Empathy': `Role-play difficult customer interactions with ${first}. Focus on tone, language, and validation techniques.`,
+    'Reassurance': `Coach ${first} on closing calls effectively. Practice confirming resolution and next-step communication.`,
+  };
+  return map[c.label] || `Coach ${first} on ${c.label} — currently at ${c.rate.toFixed(0)}%.`;
+}
+
+// ── Tab switching ─────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+  };
+});
+
+// ── Init ──────────────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>
