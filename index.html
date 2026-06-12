@@ -112,7 +112,7 @@
     <h1>Goread VP QA Dashboard</h1>
     <div class="subtitle">Customer Support Quality Assurance</div>
   </div>
-  <div id="last-updated">Loading dataÃ¢ÂÂ¦</div>
+  <div id="last-updated">Loading data</div>
 </header>
 
 <div id="error-msg"></div>
@@ -139,7 +139,7 @@
 </div>
 
 <div class="content">
-  <div id="loading"><div class="spinner"></div><div style="color:#718096">Loading QA dataÃ¢ÂÂ¦</div></div>
+  <div id="loading"><div class="spinner"></div><div style="color:#718096">Loading QA data</div></div>
 
   <div id="dashboard" style="display:none">
     <!-- Overview -->
@@ -190,7 +190,7 @@ let ALL_RECORDS = [];
 let FILTERED = [];
 let charts = {};
 
-// Ã¢ÂÂÃ¢ÂÂ CSV Parser Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+//  CSV Parser 
 function parseCSVLine(line) {
   const result = [];
   let field = '';
@@ -279,20 +279,20 @@ function parseSheet(text) {
   return records;
 }
 
-// Ã¢ÂÂÃ¢ÂÂ Data loading Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+//  Data loading 
 async function loadData() {
   try {
     const res = await fetch(CSV_URL);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const text = await res.text();
     ALL_RECORDS = parseSheet(text);
-    if (!ALL_RECORDS.length) throw new Error('No records found Ã¢ÂÂ make sure the sheet is publicly shared.');
+    if (!ALL_RECORDS.length) throw new Error('No records found  make sure the sheet is publicly shared.');
 
     const dates = ALL_RECORDS.map(r => r.dateObj);
     const minDate = new Date(Math.min(...dates));
     const maxDate = new Date(Math.max(...dates));
     document.getElementById('last-updated').textContent =
-      `Data: ${fmt(minDate)} Ã¢ÂÂ ${fmt(maxDate)} ÃÂ· ${ALL_RECORDS.length} reviews`;
+      `Data: ${fmt(minDate)}  ${fmt(maxDate)}  ${ALL_RECORDS.length} reviews`;
 
     buildMonthButtons();
     applyFilter('all');
@@ -302,7 +302,7 @@ async function loadData() {
     document.getElementById('loading').style.display = 'none';
     const err = document.getElementById('error-msg');
     err.style.display = 'block';
-    err.textContent = `Could not load data: ${e.message}. Ensure the Google Sheet is shared publicly (Anyone with link Ã¢ÂÂ Viewer).`;
+    err.textContent = `Could not load data: ${e.message}. Ensure the Google Sheet is shared publicly (Anyone with link  Viewer).`;
   }
 }
 
@@ -310,7 +310,7 @@ function fmt(d) {
   return d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
 }
 
-// Ã¢ÂÂÃ¢ÂÂ Filters Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+//  Filters 
 function buildMonthButtons() {
   const months = {};
   for (const r of ALL_RECORDS) {
@@ -365,7 +365,7 @@ document.getElementById('btn-clear-dates').onclick = () => {
   applyFilter('all');
 };
 
-// Ã¢ÂÂÃ¢ÂÂ Scoring helpers Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+//  Scoring helpers 
 function criteriaPass(val) {
   if (!val || val === 'N/A') return null;
   const v = val.toLowerCase();
@@ -413,7 +413,7 @@ function scoreClass(s) {
   return 'score-red';
 }
 
-// Ã¢ÂÂÃ¢ÂÂ Render Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+//  Render 
 function render() {
   const agents = agentStats(FILTERED);
   renderOverview(agents);
@@ -441,7 +441,7 @@ function renderOverview(agents) {
     </div>
     <div class="stat-card">
       <div class="label">Top Agent</div>
-      <div class="value" style="color:#48bb78;font-size:18px;padding-top:6px">${agents[0]?.agent || 'Ã¢ÂÂ'}</div>
+      <div class="value" style="color:#48bb78;font-size:18px;padding-top:6px">${agents[0]?.agent || ''}</div>
       <div class="sub">${agents[0] ? agents[0].avgScore.toFixed(1) + '%' : ''}</div>
     </div>
     <div class="stat-card">
@@ -553,7 +553,7 @@ function renderAgentCards(agents) {
     return `
       <div class="agent-card">
         <div class="agent-name">${a.agent}</div>
-        <div class="agent-meta">${a.count} reviews ÃÂ· Reviewer: ${[...new Set(a.records.map(r=>r.reviewer))].join(', ')}</div>
+        <div class="agent-meta">${a.count} reviews  Reviewer: ${[...new Set(a.records.map(r=>r.reviewer))].join(', ')}</div>
         <div class="agent-score-big ${scoreClass(a.avgScore)}">${a.avgScore.toFixed(1)}%</div>
         ${bars}
       </div>`;
@@ -581,7 +581,7 @@ function renderDrivers(agents) {
 
   document.getElementById('drivers-grid').innerHTML = `
     <div class="driver-card">
-      <h3>Ã°ÂÂÂ» Top Markdown Drivers (Team)</h3>
+      <h3> Top Markdown Drivers (Team)</h3>
       ${worstTeam.map(c => `
         <div class="driver-item">
           <div class="driver-name">${c.label}</div>
@@ -593,7 +593,7 @@ function renderDrivers(agents) {
       `).join('')}
     </div>
     <div class="driver-card">
-      <h3>Ã¢ÂÂ Best Performing Criteria</h3>
+      <h3> Best Performing Criteria</h3>
       ${bestTeam.map(c => `
         <div class="driver-item">
           <div class="driver-name">${c.label}</div>
@@ -606,7 +606,7 @@ function renderDrivers(agents) {
     </div>
     ${agentDrivers.map(a => `
       <div class="driver-card">
-        <h3>${a.agent} Ã¢ÂÂ Top Gaps</h3>
+        <h3>${a.agent}  Top Gaps</h3>
         ${a.worst.length === 0 ? '<div style="color:#718096;font-size:13px">No criteria data available</div>' :
           a.worst.map(c => `
             <div class="driver-item">
@@ -636,9 +636,9 @@ function renderActions(agents) {
 
   document.getElementById('actions-content').innerHTML = `
     <div class="action-section">
-      <h3>Ã°ÂÂÂ¯ Team-Wide Action Items</h3>
+      <h3> Team-Wide Action Items</h3>
       ${teamActions.length === 0
-        ? '<div style="color:#48bb78;font-size:14px">Ã¢ÂÂ All criteria above 85% Ã¢ÂÂ excellent performance!</div>'
+        ? '<div style="color:#48bb78;font-size:14px"> All criteria above 85%  excellent performance!</div>'
         : teamActions.map(a => `
           <div class="action-item">
             <span class="action-priority priority-${a.priority.toLowerCase()}">${a.priority}</span>
@@ -652,7 +652,7 @@ function renderActions(agents) {
         .slice(0, 4);
       return `
         <div class="action-section">
-          <h3>Ã°ÂÂÂ¤ ${a.agent} Ã¢ÂÂ <span class="${scoreClass(a.avgScore)}">${a.avgScore.toFixed(1)}%</span></h3>
+          <h3> ${a.agent}  <span class="${scoreClass(a.avgScore)}">${a.avgScore.toFixed(1)}%</span></h3>
           ${gaps.length === 0
             ? '<div style="color:#48bb78;font-size:14px">All tracked criteria above threshold.</div>'
             : gaps.map(c => {
@@ -681,7 +681,7 @@ function generateTeamAction(c) {
     'Empathy': 'Conduct empathy and active listening workshops. Role-play difficult customer scenarios in team meetings.',
     'Reassurance': 'Coach on providing clear reassurance and next steps. Agents should confirm resolution and set expectations before ending calls.',
   };
-  return map[c.label] || `Improve ${c.label} Ã¢ÂÂ currently at ${c.rate.toFixed(0)}%. Schedule targeted coaching sessions.`;
+  return map[c.label] || `Improve ${c.label}  currently at ${c.rate.toFixed(0)}%. Schedule targeted coaching sessions.`;
 }
 
 function generateAgentAction(agent, c) {
@@ -698,10 +698,10 @@ function generateAgentAction(agent, c) {
     'Empathy': `Role-play difficult customer interactions with ${first}. Focus on tone, language, and validation techniques.`,
     'Reassurance': `Coach ${first} on closing calls effectively. Practice confirming resolution and next-step communication.`,
   };
-  return map[c.label] || `Coach ${first} on ${c.label} Ã¢ÂÂ currently at ${c.rate.toFixed(0)}%.`;
+  return map[c.label] || `Coach ${first} on ${c.label}  currently at ${c.rate.toFixed(0)}%.`;
 }
 
-// Ã¢ÂÂÃ¢ÂÂ Tab switching Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+//  Tab switching 
 document.querySelectorAll('.tab').forEach(tab => {
   tab.onclick = () => {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -711,7 +711,7 @@ document.querySelectorAll('.tab').forEach(tab => {
   };
 });
 
-// Ã¢ÂÂÃ¢ÂÂ Init Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+//  Init 
 loadData();
 </script>
 </body>
