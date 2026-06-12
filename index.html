@@ -19,13 +19,14 @@
   .tab.active { color: #667eea; border-bottom-color: #667eea; }
   .tab:hover:not(.active) { color: #a0aec0; }
 
-  .filters { display: flex; align-items: center; gap: 10px; padding: 16px 24px; flex-wrap: wrap; }
+  .filters { display: flex; align-items: center; gap: 12px; padding: 16px 24px; flex-wrap: wrap; }
   .filters label { font-size: 13px; color: #718096; }
-  .filter-btn { padding: 6px 14px; border-radius: 6px; border: 1px solid #2d3748; background: #1a1d2e; color: #a0aec0; cursor: pointer; font-size: 13px; transition: all 0.2s; }
-  .filter-btn.active { background: #667eea; border-color: #667eea; color: #fff; }
-  .filter-btn:hover:not(.active) { border-color: #667eea; color: #667eea; }
+  .filter-select { background: #1a1d2e; border: 1px solid #2d3748; border-radius: 6px; color: #a0aec0; padding: 6px 12px; font-size: 13px; cursor: pointer; outline: none; transition: border-color 0.2s; }
+  .filter-select:focus, .filter-select:hover { border-color: #667eea; color: #e2e8f0; }
   input[type="date"] { background: #1a1d2e; border: 1px solid #2d3748; border-radius: 6px; color: #a0aec0; padding: 5px 10px; font-size: 13px; }
   .filter-sep { color: #2d3748; }
+  .filter-btn { padding: 6px 14px; border-radius: 6px; border: 1px solid #2d3748; background: #1a1d2e; color: #a0aec0; cursor: pointer; font-size: 13px; transition: all 0.2s; }
+  .filter-btn:hover { border-color: #667eea; color: #667eea; }
 
   .content { padding: 20px 24px; }
   .tab-panel { display: none; }
@@ -124,8 +125,10 @@
 </div>
 
 <div class="filters">
-  <label>Filter:</label>
-  <div id="month-buttons"></div>
+  <label>Month:</label>
+  <select id="month-select" class="filter-select">
+    <option value="all">All time</option>
+  </select>
   <div class="filter-sep">|</div>
   <label>From:</label>
   <input type="date" id="date-from">
@@ -292,30 +295,22 @@ function buildMonthButtons() {
     months[key] = label;
   }
   const sorted = Object.keys(months).sort();
-  const container = document.getElementById('month-buttons');
-  const allBtn = document.createElement('button');
-  allBtn.className = 'filter-btn active';
-  allBtn.textContent = 'All';
-  allBtn.dataset.filter = 'all';
-  allBtn.onclick = () => applyFilter('all', allBtn);
-  container.appendChild(allBtn);
+  const select = document.getElementById('month-select');
+  select.innerHTML = '<option value="all">All time</option>';
   for (const key of sorted) {
-    const btn = document.createElement('button');
-    btn.className = 'filter-btn';
-    btn.textContent = months[key];
-    btn.dataset.filter = key;
-    btn.onclick = () => applyFilter(key, btn);
-    container.appendChild(btn);
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = months[key];
+    select.appendChild(opt);
   }
+  select.onchange = () => applyFilter(select.value);
 }
 
 let activeFilter = 'all';
 
-function applyFilter(filter, btn) {
+function applyFilter(filter) {
   activeFilter = filter;
-  document.querySelectorAll('#month-buttons .filter-btn').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-  else document.querySelector('#month-buttons .filter-btn').classList.add('active');
+  document.getElementById('month-select').value = filter;
   document.getElementById('date-from').value = '';
   document.getElementById('date-to').value = '';
 
