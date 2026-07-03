@@ -451,13 +451,14 @@ function renderOverview(agents) {
     </div>
   `;
 
-  // Trend chart - weekly when month selected, monthly for all-time
-  const isMonthFilter = activeFilter !== 'all';
-  const trendSource = isMonthFilter ? FILTERED : ALL_RECORDS;
+  // Trend chart - weekly when FILTERED is single month, monthly otherwise
+  const filteredMonths = new Set(FILTERED.map(r => r.dateObj.getFullYear()+'-'+(r.dateObj.getMonth()+1)));
+  const showWeekly = filteredMonths.size === 1 && FILTERED.length < ALL_RECORDS.length;
+  const trendSource = showWeekly ? FILTERED : ALL_RECORDS;
   const byPeriod = {};
   for (const r of trendSource) {
     let key;
-    if (isMonthFilter) {
+    if (showWeekly) {
       const wk = Math.ceil(r.dateObj.getDate() / 7);
       key = 'Wk ' + wk;
     } else {
@@ -466,7 +467,7 @@ function renderOverview(agents) {
     if (!byPeriod[key]) byPeriod[key] = [];
     byPeriod[key].push(r.score);
   }
-  const monthKeys = isMonthFilter
+  const monthKeys = showWeekly
     ? ['Wk 1','Wk 2','Wk 3','Wk 4','Wk 5'].filter(k => byPeriod[k])
     : Object.keys(byPeriod).sort((a,b) => new Date('1 '+a) - new Date('1 '+b));
   const trendData = monthKeys.map(k => byPeriod[k].reduce((s,v)=>s+v,0)/byPeriod[k].length);
