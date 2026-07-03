@@ -451,18 +451,25 @@ function renderOverview(agents) {
     </div>
   `;
 
-  // Trend chart
-  const byMonth = {};
-  for (const r of ALL_RECORDS) {
-    const key = r.dateObj.toLocaleString('en-US', { month:'short', year:'2-digit' });
-    if (!byMonth[key]) byMonth[key] = [];
-    byMonth[key].push(r.score);
+  // Trend chart - weekly when month selected, monthly for all-time
+  const isMonthFilter = activeFilter !== 'all';
+  const trendSource = isMonthFilter ? FILTERED : ALL_RECORDS;
+  const byPeriod = {};
+  for (const r of trendSource) {
+    let key;
+    if (isMonthFilter) {
+      const wk = Math.ceil(r.dateObj.getDate() / 7);
+      key = 'Wk ' + wk;
+    } else {
+      key = r.dateObj.toLocaleString('en-US', { month:'short', year:'2-digit' });
+    }
+    if (!byPeriod[key]) byPeriod[key] = [];
+    byPeriod[key].push(r.score);
   }
-  const monthKeys = Object.keys(byMonth).sort((a,b) => {
-    const da = new Date('1 ' + a), db = new Date('1 ' + b);
-    return da - db;
-  });
-  const trendData = monthKeys.map(k => byMonth[k].reduce((s,v)=>s+v,0)/byMonth[k].length);
+  const monthKeys = isMonthFilter
+    ? ['Wk 1','Wk 2','Wk 3','Wk 4','Wk 5'].filter(k => byPeriod[k])
+    : Object.keys(byPeriod).sort((a,b) => new Date('1 '+a) - new Date('1 '+b));
+  const trendData = monthKeys.map(k => byPeriod[k].reduce((s,v)=>s+v,0)/byPeriod[k].length);
 
   if (charts.trend) charts.trend.destroy();
   charts.trend = new Chart(document.getElementById('chart-trend'), {
