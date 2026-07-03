@@ -453,7 +453,7 @@ function renderOverview(agents) {
 
   // Trend chart
   const byMonth = {};
-  for (const r of FILTERED) {
+  for (const r of ALL_RECORDS) {
     const key = r.dateObj.toLocaleString('en-US', { month:'short', year:'2-digit' });
     if (!byMonth[key]) byMonth[key] = [];
     byMonth[key].push(r.score);
